@@ -58,10 +58,28 @@ impl MessageFactory {
         payload: &T,
     ) -> Vec<u8> {
         let message_header = MessageHeader::new(magic, command, payload);
-        println!("message_header:{:?}", message_header);
-        println!("payload:{:?}", payload);
+
         let serialized_message_header = message_header.serialize();
+
+        println!(
+            "serialized_message_header: {}",
+            serialized_message_header
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
+
         let serialized_payload = payload.serialize();
+        println!(
+            "serialized_payload: {}",
+            serialized_payload
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
+
         serialized_message_header
             .into_iter()
             .chain(serialized_payload.into_iter())
@@ -72,33 +90,6 @@ impl MessageFactory {
 pub trait Message {
     fn serialize(&self) -> Vec<u8>;
 }
-
-// fn create_header<T>(payload: &T) -> MessageHeader {
-//     let length = payload.len() as u32;
-
-//     if payload.command
-//     let checksum = calculate_checksum(&payload); // 假设这个函数计算校验和
-
-//     // 你可以从 message 对象中获取命令名称，或者使用 Rust 的类型系统来确定它
-//     let command = get_command_name(&message); // 假设这个函数返回命令名称
-
-//     MessageHeader::new(0xD9B4BEF9, &command, length, checksum)
-// }
-
-// fn serialize<T>(payload: &T) -> Vec<u8>
-// where
-//     T: Message,
-// {
-//     let message_header = create_header(payload);
-//     let serialized_message_header = message_header.serialize();
-//     let serialized_payload = payload.serialize();
-//     let mut res = Vec::new();
-//     res.extend(serialized_message_header);
-//     res.extend(serialized_payload);
-//     res
-
-//     //serialize payload
-// }
 
 fn checksum(payload: &[u8]) -> [u8; 4] {
     let mut hasher = Sha256::new();
