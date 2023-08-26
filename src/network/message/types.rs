@@ -1,9 +1,9 @@
 use super::factory::Message;
+use rand::Rng;
 use std::{
     net::{Ipv4Addr, Ipv6Addr},
     time::{SystemTime, UNIX_EPOCH},
 };
-
 #[derive(Debug)]
 pub struct NetAddr {
     services: u64,
@@ -23,7 +23,7 @@ impl NetAddr {
         let mut serialized_netaddr: Vec<u8> = Vec::new();
         serialized_netaddr.extend(&self.services.to_le_bytes());
         serialized_netaddr.extend(&self.ip_address.octets());
-        serialized_netaddr.extend(&self.port.to_le_bytes());
+        serialized_netaddr.extend(&self.port.to_be_bytes());
         serialized_netaddr
     }
 }
@@ -81,16 +81,15 @@ impl Default for VersionMessage {
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards");
         let timestamp = time_since_epoch.as_secs().try_into().unwrap();
-        // let public_ip_from: Ipv4Addr =
-        // let ipv6_from = public_ip_from.to_ipv6_mapped();
-
+        let mut rng = rand::thread_rng();
+        let random_value: u64 = rng.gen();
         VersionMessage {
             version: 70015,
             services: 0,
             timestamp,
             addr_recv: NetAddr::new(0, Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), 8333),
             addr_from: NetAddr::new(0, Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1), 8333),
-            nonce: 0,
+            nonce: random_value,
             user_agent: 0,
             start_height: 0,
         }

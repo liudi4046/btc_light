@@ -36,7 +36,7 @@ impl MessageHeader {
         let mut serialized_message: Vec<u8> = Vec::new();
         serialized_message.extend(&self.magic.to_le_bytes());
         serialized_message.extend(&self.command);
-        serialized_message.extend(&self.length.to_be_bytes());
+        serialized_message.extend(&self.length.to_le_bytes());
         serialized_message.extend(&self.checksum);
         serialized_message
     }

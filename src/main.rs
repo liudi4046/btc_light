@@ -6,7 +6,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 #[tokio::main]
 async fn main() {
-    let ipv4_recv: Ipv4Addr = "167.179.147.155".parse().unwrap();
+    let ipv4_recv: Ipv4Addr = "43.159.49.47".parse().unwrap();
 
     let ipv4_from = fetch_public_ip().await.expect("fetch public ip error");
 
@@ -25,9 +25,32 @@ async fn main() {
             .collect::<Vec<String>>()
             .join(" ")
     );
-
+    let full_sample_data = [
+        0xd9, 0xb4, 0xbe, 0xf9, // Magic value
+        0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00,
+        0x00, // Command name: "version"
+        0x5d, 0x00, 0x00, 0x00, // Payload length: 93
+        0x1, 0x2, 0x3, 0x4, // Checksum (你需要自己计算)
+        0x72, 0x11, 0x01, 0x00, // Protocol version
+        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Services: NODE_NETWORK
+        0xbc, 0x8f, 0x5e, 0x54, 0x00, 0x00, 0x00, 0x00, // [Epoch time][unix epoch time]
+        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Receiving node's services
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc6, 0x1b, 0x64,
+        0x09, // Receiving node's IPv6 address
+        0x20, 0x8d, // Receiving node's port number
+        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Transmitting node's services
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xcb, 0x00, 0x71,
+        0xc0, // Transmitting node's IPv6 address
+        0x20, 0x8d, // Transmitting node's port number
+        0x12, 0x80, 0x35, 0xcb, 0xc9, 0x79, 0x53, 0xf8, // Nonce
+        0x0f, // Bytes in user agent string
+        0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68, 0x69, 0x3a, 0x30, 0x2e, 0x39, 0x2e, 0x33,
+        0x2f, // User agent
+        0xcf, 0x05, 0x05, 0x00, // Start height
+        0x01, // Relay flag
+    ];
     // 尝试连接到远程节点
-    let mut stream = TcpStream::connect("44.200.45.202:8333")
+    let mut stream = TcpStream::connect("43.159.49.47:8333")
         .await
         .expect("Could not connect to the node");
 
@@ -43,8 +66,8 @@ async fn main() {
         .read(&mut response)
         .await
         .expect("Failed to read response");
-
     // 将响应字节转换为字符串并打印
+    println!("original response: {:?}", response);
     let response_str = String::from_utf8_lossy(&response[..bytes_read]);
     println!("Received response: {}", response_str);
 }
