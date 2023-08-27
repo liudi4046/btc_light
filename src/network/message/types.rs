@@ -1,10 +1,13 @@
 use super::factory::Message;
+use byteorder::BigEndian;
+#[derive(Debug)]
+use byteorder::{LittleEndian, ReadBytesExt};
 use rand::Rng;
 use std::{
+    io::Read,
     net::{Ipv4Addr, Ipv6Addr},
     time::{SystemTime, UNIX_EPOCH},
 };
-#[derive(Debug)]
 pub struct NetAddr {
     services: u64,
     ip_address: Ipv6Addr,
@@ -31,7 +34,7 @@ impl NetAddr {
 #[derive(Debug)]
 pub struct VersionMessage {
     version: i32,
-    services: i64,
+    services: u64,
     timestamp: i64,
     addr_recv: NetAddr,
     addr_from: NetAddr,
@@ -43,7 +46,7 @@ pub struct VersionMessage {
 impl VersionMessage {
     pub fn new(
         version: i32,
-        services: i64,
+        services: u64,
         timestamp: i64,
         addr_recv: NetAddr,
         addr_from: NetAddr,
@@ -110,5 +113,44 @@ impl Message for VersionMessage {
         serialized_message.extend(&self.start_height.to_le_bytes());
 
         serialized_message
+    }
+    fn deserialize(cursor: &mut std::io::Cursor<&[u8]>) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        //head
+        let magic = cursor.read_u32::<LittleEndian>()?;
+
+        let mut command: [u8; 12] = [0; 12];
+        cursor.read_exact(&mut command);
+
+        let length = cursor.read_u32::<LittleEndian>()?;
+
+        let checksum: [u8; 4] = [0; 4];
+        cursor.read_exact(&mut checksum);
+
+        //payload
+        let version = cursor.read_i32::<LittleEndian>()?;
+        let services = cursor.read_u64::<LittleEndian>()?;
+        let timestamp = cursor.read_i64::<LittleEndian>()?;
+
+        // addr_recv
+        let addr_recv_services = cursor.read_u64::<LittleEndian>()?;
+        let mut addr_recv_ip_bytes: [u8; 16] = [0; 16];
+        cursor.read_exact(&mut addr_recv_ip_bytes);
+        let addr_recv_ip = Ipv6Addr::from(addr_recv_ip_bytes);
+        let addr_recv_port = cursor.read_u16::<BigEndian>()?;
+
+        //addr_trans
+        let addr_trans_services = cursor.read_u64::<LittleEndian>()?;
+        let mut addr_trans_ip_bytes: [u8; 16] = [0; 16];
+        cursor.read_exact(&mut addr_trans_ip_bytes);
+        let addr_trans_ip = Ipv6Addr::from(addr_trans_ip_bytes);
+        let addr_trans_port = cursor.read_u16::<BigEndian>()?;
+
+        let version = cursor.read_i32::<LittleEndian>()?;
+        let version = cursor.read_i32::<LittleEndian>()?;
+
+        let mut deserialized_version_message = VersionMessage::new();
     }
 }

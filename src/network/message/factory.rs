@@ -44,6 +44,24 @@ impl MessageHeader {
 pub struct MessageFactory;
 
 impl MessageFactory {
+    //从收到的原始消息创建消息结构体
+    pub fn from_raw(data: &[u8], msg_type: MessageType) -> Result<Box<dyn Message>, &'static str> {
+        let mut cursor = Cursor::new(data);
+
+        match msg_type {
+            MessageType::Version => {
+                let version_msg = VersionMessage::deserialize(&mut cursor)?;
+                Ok(Box::new(version_msg))
+            }
+            MessageType::Verack => {
+                let verack_msg = VerackMessage::deserialize(&mut cursor)?;
+                Ok(Box::new(verack_msg))
+            }
+            // ... 其他消息类型的处理
+            _ => Err("Unsupported message type"),
+        }
+    }
+
     // 根据给定参数创建新消息
     pub fn new_version_payload(ipv4_recv: Option<Ipv4Addr>) -> VersionMessage {
         match ipv4_recv {
@@ -89,6 +107,9 @@ impl MessageFactory {
 
 pub trait Message {
     fn serialize(&self) -> Vec<u8>;
+    fn deserialize(cursor: &mut Cursor<&[u8]>) -> Result<Self, std::io::Error>
+    where
+        Self: Sized;
 }
 
 fn checksum(payload: &[u8]) -> [u8; 4] {

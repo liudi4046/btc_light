@@ -67,7 +67,15 @@ async fn main() {
         .await
         .expect("Failed to read response");
     // 将响应字节转换为字符串并打印
-    println!("original response: {:?}", response);
+    println!(
+        "original response: {}",
+        response
+            .iter()
+            .map(|byte| format!("{:02x}", byte))
+            .collect::<Vec<String>>()
+            .join(" ")
+    );
+
     let response_str = String::from_utf8_lossy(&response[..bytes_read]);
     println!("Received response: {}", response_str);
 }
